@@ -5,15 +5,15 @@ AVClass2 labeler
 
 import os
 import sys
-script_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(1, os.path.join(script_dir, 'lib/'))
-sys.path.insert(1, os.path.join(script_dir, '../shared/'))
 import argparse
 from avclass2_common import AvLabels
 from operator import itemgetter
 import evaluate_clustering as ec
 import json
 import traceback
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(1, os.path.join(script_dir, 'lib/'))
+sys.path.insert(1, os.path.join(script_dir, '../shared/'))
 
 # Default tagging file
 default_tag_file = os.path.join(script_dir, "data/default.tagging")
@@ -21,6 +21,7 @@ default_tag_file = os.path.join(script_dir, "data/default.tagging")
 default_exp_file = os.path.join(script_dir, "data/default.expansion")
 # Default taxonomy file
 default_tax_file = os.path.join(script_dir, "data/default.taxonomy")
+
 
 def guess_hash(h):
     ''' Given a hash string, guess the hash type based on the string length '''
@@ -34,31 +35,34 @@ def guess_hash(h):
     else:
         return None
 
-def format_tag_pairs(l, taxonomy=None):
+
+def format_tag_pairs(varl, taxonomy=None):
     ''' Return ranked tags as string '''
-    if not l:
+    if not varl:
         return ""
     if taxonomy is not None:
-        p = taxonomy.get_path(l[0][0])
+        p = taxonomy.get_path(varl[0][0])
     else:
-        p = l[0][0]
-    out = "%s|%d" % (p, l[0][1])
-    for (t,s) in l[1:]:
+        p = varl[0][0]
+    out = "%s|%d" % (p, varl[0][1])
+    for (t, s) in varl[1:]:
         if taxonomy is not None:
-            p = taxonomy.get_path(t) 
+            p = taxonomy.get_path(t)
         else:
             p = t
         out += ",%s|%d" % (p, s)
     return out
 
-def list_str(l, sep=", ", prefix=""):
+
+def list_str(varl, sep=", ", prefix=""):
     ''' Return list as a string '''
-    if not l:
+    if not varl:
         return ""
-    out = prefix + l[0]
-    for s in l[1:]:
+    out = prefix + varl[0]
+    for s in varl[1:]:
         out = out + sep + s
     return out
+
 
 def main(args):
     # Select hash used to identify sample, by default MD5
@@ -76,8 +80,8 @@ def main(args):
         hash_type = guess_hash(list(gt_dict.keys())[0])
 
     # Create AvLabels object
-    av_labels = AvLabels(args.tag, args.exp, args.tax,
-                         args.av, args.aliasdetect)
+    av_labels = AvLabels(args.tag, args.exp, args.tax, args.av,
+                         args.aliasdetect)
 
     # Build list of input files
     # NOTE: duplicate input files are not removed
@@ -89,12 +93,14 @@ def main(args):
         ifile_l += args.lb
         ifile_are_vt = False
     if (args.vtdir):
-        ifile_l += [os.path.join(args.vtdir, 
-                                  f) for f in os.listdir(args.vtdir)]
+        ifile_l += [
+            os.path.join(args.vtdir, f) for f in os.listdir(args.vtdir)
+        ]
         ifile_are_vt = True
     if (args.lbdir):
-        ifile_l += [os.path.join(args.lbdir, 
-                                  f) for f in os.listdir(args.lbdir)]
+        ifile_l += [
+            os.path.join(args.lbdir, f) for f in os.listdir(args.lbdir)
+        ]
         ifile_are_vt = False
 
     # Select correct sample info extraction function
@@ -114,8 +120,17 @@ def main(args):
     pair_count_map = {}
     vt_all = 0
     avtags_dict = {}
-    stats = {'samples': 0, 'noscans': 0, 'tagged': 0, 'maltagged': 0,
-             'FAM': 0, 'CLASS': 0, 'BEH': 0, 'FILE': 0, 'UNK': 0}
+    stats = {
+        'samples': 0,
+        'noscans': 0,
+        'tagged': 0,
+        'maltagged': 0,
+        'FAM': 0,
+        'CLASS': 0,
+        'BEH': 0,
+        'FILE': 0,
+        'UNK': 0
+    }
 
     # Process each input file
     for ifile in ifile_l:
@@ -169,7 +184,7 @@ def main(args):
             vt_count = len(sample_info.labels)
 
             # Get the distinct tokens from all the av labels in the report
-            # And print them. 
+            # And print them.
             try:
                 av_tmp = av_labels.get_sample_tags(sample_info)
                 tags = av_labels.rank_tags(av_tmp)
@@ -191,24 +206,28 @@ def main(args):
                         token_count_map[curr_tok] = curr_count + 1
                         for prev_tok in prev_tokens:
                             if prev_tok < curr_tok:
-                                pair = (prev_tok,curr_tok)
+                                pair = (prev_tok, curr_tok)
                             else:
-                                pair = (curr_tok,prev_tok)
+                                pair = (curr_tok, prev_tok)
                             pair_count = pair_count_map.get(pair, 0)
                             pair_count_map[pair] = pair_count + 1
                         prev_tokens.add(curr_tok)
 
                 # Collect stats
-                # FIX: should iterate once over tags, 
+                # FIX: should iterate once over tags,
                 # for both stats and aliasdetect
                 if tags:
                     stats["tagged"] += 1
                     if args.stats:
                         if (vt_count > 3):
                             stats["maltagged"] += 1
-                            cat_map = {'FAM': False, 'CLASS': False,
-                                       'BEH': False, 'FILE': False, 'UNK':
-                                           False}
+                            cat_map = {
+                                'FAM': False,
+                                'CLASS': False,
+                                'BEH': False,
+                                'FILE': False,
+                                'UNK': False
+                            }
                             for t in tags:
                                 path, cat = av_labels.taxonomy.get_info(t[0])
                                 cat_map[cat] = True
@@ -223,14 +242,14 @@ def main(args):
                     else:
                         is_pup_str = "\t0"
                 else:
-                    is_pup_str =  ""
+                    is_pup_str = ""
 
                 # Select family for sample if needed,
                 # i.e., for compatibility mode or for ground truth
                 if args.c or args.gt:
                     fam = "SINGLETON:" + name
                     # fam = ''
-                    for (t,s) in tags:
+                    for (t, s) in tags:
                         cat = av_labels.taxonomy.get_category(t)
                         if (cat == "UNK") or (cat == "FAM"):
                             fam = t
@@ -255,13 +274,13 @@ def main(args):
                         tag_str = format_tag_pairs(tags, av_labels.taxonomy)
                     else:
                         tag_str = format_tag_pairs(tags)
-                    sys.stdout.write('%s\t%d\t%s%s%s%s\n' %
-                                     (name, vt_count, tag_str, gt_family,
-                                      is_pup_str, vtt))
+                    sys.stdout.write(
+                        '%s\t%d\t%s%s%s%s\n' %
+                        (name, vt_count, tag_str, gt_family, is_pup_str, vtt))
                 else:
                     sys.stdout.write('%s\t%s%s%s\n' %
                                      (name, fam, gt_family, is_pup_str))
-            except:
+            except Exception:
                 traceback.print_exc(file=sys.stderr)
                 continue
 
@@ -275,9 +294,8 @@ def main(args):
 
     # Print statistics
     sys.stderr.write(
-            "[-] Samples: %d NoScans: %d NoTags: %d GroundTruth: %d\n" % (
-                vt_all, stats['noscans'], vt_all - stats['tagged'], 
-                len(gt_dict)))
+        "[-] Samples: %d NoScans: %d NoTags: %d GroundTruth: %d\n" %
+        (vt_all, stats['noscans'], vt_all - stats['tagged'], len(gt_dict)))
 
     # If ground truth, print precision, recall, and F1-measure
     if args.gt:
@@ -285,8 +303,7 @@ def main(args):
                     ec.eval_precision_recall_fmeasure(gt_dict,
                                                       first_token_dict)
         sys.stderr.write(
-            "Precision: %.2f\tRecall: %.2f\tF1-Measure: %.2f\n" % \
-                          (precision, recall, fmeasure))
+            "Precision: %.2f\tRecall: %.2f\tF1-Measure: %.2f\n" % (precision, recall, fmeasure))
 
     # Output stats
     if args.stats:
@@ -299,7 +316,7 @@ def main(args):
         num_maltagged = stats['maltagged']
         frac = float(num_maltagged) / float(num_samples) * 100
         stats_fd.write('Tagged (VT>3): %d (%.01f%%)\n' % (num_maltagged, frac))
-        for c in ['FILE','CLASS','BEH','FAM','UNK']:
+        for c in ['FILE', 'CLASS', 'BEH', 'FAM', 'UNK']:
             count = stats[c]
             frac = float(count) / float(num_maltagged) * 100
             stats_fd.write('%s: %d (%.01f%%)\n' % (c, stats[c], frac))
@@ -311,8 +328,8 @@ def main(args):
         for t in sorted(avtags_dict.keys()):
             avtags_fd.write('%s\t' % t)
             pairs = sorted(avtags_dict[t].items(),
-                            key=lambda pair : pair[1],
-                            reverse=True)
+                           key=lambda pair: pair[1],
+                           reverse=True)
             for pair in pairs:
                 avtags_fd.write('%s|%d,' % (pair[0], pair[1]))
             avtags_fd.write('\n')
@@ -324,8 +341,7 @@ def main(args):
         alias_filename = out_prefix + '.alias'
         alias_fd = open(alias_filename, 'w+')
         # Sort token pairs by number of times they appear together
-        sorted_pairs = sorted(
-            pair_count_map.items(), key=itemgetter(1))
+        sorted_pairs = sorted(pair_count_map.items(), key=itemgetter(1))
         # sorted_pairs = sorted(
         #     pair_count_map.items())
 
@@ -348,131 +364,134 @@ def main(args):
                 yn = n1
             f = float(c) / float(xn)
             finv = float(c) / float(yn)
-            alias_fd.write("%s\t%s\t%d\t%d\t%d\t%0.2f\t%0.2f\n" % (
-                x, y, xn, yn, c, f, finv))
+            alias_fd.write("%s\t%s\t%d\t%d\t%d\t%0.2f\t%0.2f\n" %
+                           (x, y, xn, yn, c, f, finv))
         # Close alias file
         alias_fd.close()
         sys.stderr.write('[-] Alias data in %s\n' % (alias_filename))
 
 
-if __name__=='__main__':
-    argparser = argparse.ArgumentParser(prog='avclass2_labeler',
+if __name__ == '__main__':
+    argparser = argparse.ArgumentParser(
+        prog='avclass2_labeler',
         description='''Extracts tags for a set of samples.
             Also calculates precision and recall if ground truth available''')
 
-    argparser.add_argument('-vt', action='append',
-        help='file with VT reports '
-             '(Can be provided multiple times)')
+    argparser.add_argument('-vt',
+                           action='append',
+                           help='file with VT reports '
+                           '(Can be provided multiple times)')
 
-    argparser.add_argument('-lb', action='append',
-        help='file with simplified JSON reports'
-             '{md5,sha1,sha256,scan_date,av_labels} '
-             '(Can be provided multiple times)')
+    argparser.add_argument('-lb',
+                           action='append',
+                           help='file with simplified JSON reports'
+                           '{md5,sha1,sha256,scan_date,av_labels} '
+                           '(Can be provided multiple times)')
 
-    argparser.add_argument('-vtdir',
-        help='existing directory with VT reports')
+    argparser.add_argument('-vtdir', help='existing directory with VT reports')
 
-    argparser.add_argument('-lbdir',
-        help='existing directory with simplified JSON reports')
+    argparser.add_argument(
+        '-lbdir', help='existing directory with simplified JSON reports')
 
-    argparser.add_argument('-vt3', action='store_true',
-        help='input are VT v3 files')
+    argparser.add_argument('-vt3',
+                           action='store_true',
+                           help='input are VT v3 files')
 
     argparser.add_argument('-gt',
-        help='file with ground truth. '
-             'If provided it evaluates clustering accuracy. '
-             'Prints precision, recall, F1-measure.')
+                           help='file with ground truth. '
+                           'If provided it evaluates clustering accuracy. '
+                           'Prints precision, recall, F1-measure.')
 
     argparser.add_argument('-vtt',
-        help='Include VT tags in the output.',
-        action='store_true')
+                           help='Include VT tags in the output.',
+                           action='store_true')
 
     argparser.add_argument('-tag',
-        help='file with tagging rules.',
-        default = default_tag_file)
+                           help='file with tagging rules.',
+                           default=default_tag_file)
 
     argparser.add_argument('-tax',
-        help='file with taxonomy.',
-        default = default_tax_file)
+                           help='file with taxonomy.',
+                           default=default_tax_file)
 
     argparser.add_argument('-exp',
-        help='file with expansion rules.',
-        default = default_exp_file)
+                           help='file with expansion rules.',
+                           default=default_exp_file)
 
-    argparser.add_argument('-av',
-        help='file with list of AVs to use')
+    argparser.add_argument('-av', help='file with list of AVs to use')
 
     argparser.add_argument('-avtags',
-        help='extracts tags per av vendor',
-        action='store_true')
+                           help='extracts tags per av vendor',
+                           action='store_true')
 
-    argparser.add_argument('-pup',
+    argparser.add_argument(
+        '-pup',
         action='store_true',
         help='if used each sample is classified as PUP or not')
 
-    argparser.add_argument('-p', '--path',
-        help='output.full path for tags',
-        action='store_true')
+    argparser.add_argument('-p',
+                           '--path',
+                           help='output.full path for tags',
+                           action='store_true')
 
-    argparser.add_argument('-hash',
+    argparser.add_argument(
+        '-hash',
         help='hash used to name samples. Should match ground truth',
         choices=['md5', 'sha1', 'sha256'])
 
-    argparser.add_argument('-c',
+    argparser.add_argument(
+        '-c',
         help='Compatibility mode. Outputs results in AVClass format.',
         action='store_true')
 
     argparser.add_argument('-aliasdetect',
-        action='store_true',
-        help='if used produce aliases file at end')
+                           action='store_true',
+                           help='if used produce aliases file at end')
 
     argparser.add_argument('-stats',
                            action='store_true',
                            help='if used produce 1 file '
-                                'with stats per category '
-                                '(File, Class, '
-                                'Behavior, Family, Unclassified)')
+                           'with stats per category '
+                           '(File, Class, '
+                           'Behavior, Family, Unclassified)')
 
     args = argparser.parse_args()
 
     if not args.vt and not args.lb and not args.vtdir and not args.lbdir:
         sys.stderr.write('One of the following 4 arguments is required: '
-                          '-vt,-lb,-vtdir,-lbdir\n')
+                         '-vt,-lb,-vtdir,-lbdir\n')
         exit(1)
 
     if (args.vt or args.vtdir) and (args.lb or args.lbdir):
         sys.stderr.write('Use either -vt/-vtdir or -lb/-lbdir. '
-                          'Both types of input files cannot be combined.\n')
+                         'Both types of input files cannot be combined.\n')
         exit(1)
 
     if args.tag:
         if args.tag == '/dev/null':
             sys.stderr.write('[-] Using no tagging rules\n')
         else:
-            sys.stderr.write('[-] Using tagging rules in %s\n' % (
-                              args.tag))
+            sys.stderr.write('[-] Using tagging rules in %s\n' % (args.tag))
     else:
-        sys.stderr.write('[-] Using default tagging rules in %s\n' % (
-                          default_tag_file))
+        sys.stderr.write('[-] Using default tagging rules in %s\n' %
+                         (default_tag_file))
 
     if args.tax:
         if args.tax == '/dev/null':
             sys.stderr.write('[-] Using no taxonomy\n')
         else:
-            sys.stderr.write('[-] Using taxonomy in %s\n' % (
-                              args.tax))
+            sys.stderr.write('[-] Using taxonomy in %s\n' % (args.tax))
     else:
-        sys.stderr.write('[-] Using default taxonomy in %s\n' % (
-                          default_tax_file))
+        sys.stderr.write('[-] Using default taxonomy in %s\n' %
+                         (default_tax_file))
 
     if args.exp:
         if args.exp == '/dev/null':
             sys.stderr.write('[-] Using no expansion tags\n')
         else:
-            sys.stderr.write('[-] Using expansion tags in %s\n' % (
-                              args.exp))
+            sys.stderr.write('[-] Using expansion tags in %s\n' % (args.exp))
     else:
-        sys.stderr.write('[-] Using default expansion tags in %s\n' % (
-                          default_exp_file))
+        sys.stderr.write('[-] Using default expansion tags in %s\n' %
+                         (default_exp_file))
 
     main(args)
