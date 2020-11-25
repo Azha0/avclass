@@ -5,15 +5,15 @@ AVClass2 labeler
 
 import os
 import sys
-import argparse
-from avclass2_common import AvLabels
-from operator import itemgetter
-import evaluate_clustering as ec
-import json
-import traceback
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(1, os.path.join(script_dir, 'lib/'))
 sys.path.insert(1, os.path.join(script_dir, '../shared/'))
+import argparse  # noqa: E402
+import json  # noqa: E402
+import traceback  # noqa: E402
+from avclass2_common import AvLabels  # noqa: E402
+from operator import itemgetter  # noqa: E402
+import evaluate_clustering as ec  # noqa: E402
 
 # Default tagging file
 default_tag_file = os.path.join(script_dir, "data/default.tagging")
@@ -302,8 +302,8 @@ def main(args):
         precision, recall, fmeasure = \
                     ec.eval_precision_recall_fmeasure(gt_dict,
                                                       first_token_dict)
-        sys.stderr.write(
-            "Precision: %.2f\tRecall: %.2f\tF1-Measure: %.2f\n" % (precision, recall, fmeasure))
+        sys.stderr.write("Precision: %.2f\tRecall: %.2f\tF1-Measure: %.2f\n" %
+                         (precision, recall, fmeasure))
 
     # Output stats
     if args.stats:

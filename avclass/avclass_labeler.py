@@ -22,6 +22,7 @@ default_alias_file = os.path.join(path, "data/default.aliases")
 # Default generic tokens file
 default_gen_file = os.path.join(path, "data/default.generics")
 
+
 def guess_hash(h):
     '''Given a hash string, guess the hash type based on the string length'''
     hlen = len(h)
@@ -33,6 +34,7 @@ def guess_hash(h):
         return 'sha256'
     else:
         return None
+
 
 def main(args):
     # Select hash used to identify sample, by default MD5
@@ -61,11 +63,15 @@ def main(args):
     if (args.lb):
         ifile_l += args.lb
         ifile_are_vt = False
-    if (args.vtdir): 
-        ifile_l += [os.path.join(args.vtdir, f) for f in os.listdir(args.vtdir)]
+    if (args.vtdir):
+        ifile_l += [
+            os.path.join(args.vtdir, f) for f in os.listdir(args.vtdir)
+        ]
         ifile_are_vt = True
     if (args.lbdir):
-        ifile_l += [os.path.join(args.lbdir, f) for f in os.listdir(args.lbdir)]
+        ifile_l += [
+            os.path.join(args.lbdir, f) for f in os.listdir(args.lbdir)
+        ]
         ifile_are_vt = False
 
     # Select correct sample info extraction function
@@ -137,13 +143,14 @@ def main(args):
                 sys.stderr.write('\nNo AV labels for %s\n' % name)
                 sys.stderr.flush()
                 continue
-            
+
             # Get the distinct tokens from all the av labels in the report
             # And print them. If not verbose, print the first token.
             # If verbose, print the whole list
             try:
                 # Get distinct tokens from AV labels
-                tokens = list(av_labels.get_family_ranking(sample_info).items())
+                tokens = list(
+                    av_labels.get_family_ranking(sample_info).items())
 
                 # If alias detection, populate maps
                 if args.aliasdetect:
@@ -157,9 +164,9 @@ def main(args):
                             token_count_map[curr_tok] = 1
                         for prev_tok in prev_tokens:
                             if prev_tok < curr_tok:
-                                pair = (prev_tok,curr_tok) 
-                            else: 
-                                pair = (curr_tok,prev_tok)
+                                pair = (prev_tok, curr_tok)
+                            else:
+                                pair = (curr_tok, prev_tok)
                             pair_count = pair_count_map.get(pair)
                             if pair_count:
                                 pair_count_map[pair] = pair_count + 1
@@ -196,7 +203,7 @@ def main(args):
                         is_pup_str = "\t0"
                 else:
                     is_pup = None
-                    is_pup_str =  ""
+                    is_pup_str = ""
 
                 # Build family map for precision, recall, computation
                 first_token_dict[name] = family
@@ -208,14 +215,14 @@ def main(args):
                     gt_family = ""
 
                 # Print family (and ground truth if available) to stdout
-                sys.stdout.write('%s\t%s%s%s\n' % (name, family, gt_family, 
-                                                    is_pup_str))
+                sys.stdout.write('%s\t%s%s%s\n' %
+                                 (name, family, gt_family, is_pup_str))
 
-                # If verbose, print tokens (and ground truth if available) 
+                # If verbose, print tokens (and ground truth if available)
                 # to log file
                 if args.verbose:
-                    verb_fd.write('%s\t%s%s%s\n' % (
-                        name, tokens, gt_family, is_pup_str))
+                    verb_fd.write('%s\t%s%s%s\n' %
+                                  (name, tokens, gt_family, is_pup_str))
 
                 # Store family stats (if required)
                 if args.fam:
@@ -251,10 +258,9 @@ def main(args):
         fd.close()
 
     # Print statistics
-    sys.stderr.write(
-            "[-] Samples: %d NoLabels: %d Singletons: %d "
-            "GroundTruth: %d\n" % (
-                vt_all, vt_empty, singletons, len(gt_dict)))
+    sys.stderr.write("[-] Samples: %d NoLabels: %d Singletons: %d "
+                     "GroundTruth: %d\n" %
+                     (vt_all, vt_empty, singletons, len(gt_dict)))
 
     # If ground truth, print precision, recall, and F1-measure
     if args.gt and args.eval:
@@ -272,10 +278,10 @@ def main(args):
         gen_fd = open(gen_filename, 'w+')
         # Output header line
         gen_fd.write("Token\t#Families\n")
-        sorted_pairs = sorted(token_family_map.items(), 
-                              key=lambda x: len(x[1]) if x[1] else 0, 
+        sorted_pairs = sorted(token_family_map.items(),
+                              key=lambda x: len(x[1]) if x[1] else 0,
                               reverse=True)
-        for (t,fset) in sorted_pairs:
+        for (t, fset) in sorted_pairs:
             gen_fd.write("%s\t%d\n" % (t, len(fset)))
 
         # Close generic tokens file
@@ -288,12 +294,11 @@ def main(args):
         alias_filename = out_prefix + '.alias'
         alias_fd = open(alias_filename, 'w+')
         # Sort token pairs by number of times they appear together
-        sorted_pairs = sorted(
-                pair_count_map.items(), key=itemgetter(1))
+        sorted_pairs = sorted(pair_count_map.items(), key=itemgetter(1))
         # Output header line
         alias_fd.write("# t1\tt2\t|t1|\t|t2|\t|t1^t2|\t|t1^t2|/|t1|\n")
         # Compute token pair statistic and output to alias file
-        for (t1,t2),c in sorted_pairs:
+        for (t1, t2), c in sorted_pairs:
             n1 = token_count_map[t1]
             n2 = token_count_map[t2]
             if (n1 < n2):
@@ -307,8 +312,8 @@ def main(args):
                 xn = n2
                 yn = n1
             f = float(c) / float(xn)
-            alias_fd.write("%s\t%s\t%d\t%d\t%d\t%0.2f\n" % (
-                x,y,xn,yn,c,f))
+            alias_fd.write("%s\t%s\t%d\t%d\t%d\t%0.2f\n" %
+                           (x, y, xn, yn, c, f))
         # Close alias file
         alias_fd.close()
         sys.stderr.write('[-] Alias data in %s\n' % (alias_filename))
@@ -324,17 +329,18 @@ def main(args):
         else:
             fam_fd.write("# Family\tTotal\n")
         # Sort map
-        sorted_pairs = sorted(fam_stats.items(), key=itemgetter(1),
+        sorted_pairs = sorted(fam_stats.items(),
+                              key=itemgetter(1),
                               reverse=True)
         # Print map contents
-        for (f,fstat) in sorted_pairs:
+        for (f, fstat) in sorted_pairs:
             if args.pup:
                 if fstat[1] > fstat[2]:
                     famType = "malware"
                 else:
                     famType = "pup"
-                fam_fd.write("%s\t%d\t%d\t%d\t%s\n" % (f, fstat[0], fstat[1],
-                                                fstat[2], famType))
+                fam_fd.write("%s\t%d\t%d\t%d\t%s\n" %
+                             (f, fstat[0], fstat[1], fstat[2], famType))
             else:
                 fam_fd.write("%s\t%d\n" % (f, fstat[0]))
         # Close file
@@ -347,83 +353,90 @@ def main(args):
         verb_fd.close()
 
 
-
-if __name__=='__main__':
-    argparser = argparse.ArgumentParser(prog='avclass_labeler',
+if __name__ == '__main__':
+    argparser = argparse.ArgumentParser(
+        prog='avclass_labeler',
         description='''Extracts the family of a set of samples.
             Also calculates precision and recall if ground truth available''')
 
-    argparser.add_argument('-vt', action='append',
-        help='file with VT reports '
-             '(Can be provided multiple times)')
+    argparser.add_argument('-vt',
+                           action='append',
+                           help='file with VT reports '
+                           '(Can be provided multiple times)')
 
-    argparser.add_argument('-lb', action='append',
-        help='file with simplified JSON reports '
-             '{md5,sha1,sha256,scan_date,av_labels} '
-             '(Can be provided multiple times)')
+    argparser.add_argument('-lb',
+                           action='append',
+                           help='file with simplified JSON reports '
+                           '{md5,sha1,sha256,scan_date,av_labels} '
+                           '(Can be provided multiple times)')
 
-    argparser.add_argument('-vtdir',
-        help='existing directory with VT reports')
+    argparser.add_argument('-vtdir', help='existing directory with VT reports')
 
-    argparser.add_argument('-lbdir',
-        help='existing directory with simplified JSON reports')
+    argparser.add_argument(
+        '-lbdir', help='existing directory with simplified JSON reports')
 
-    argparser.add_argument('-gt',
-        help='file with ground truth')
+    argparser.add_argument('-gt', help='file with ground truth')
 
-    argparser.add_argument('-eval',
+    argparser.add_argument(
+        '-eval',
         action='store_true',
         help='if used it evaluates clustering accuracy.'
-             ' Prints precision, recall, F1-measure. Requires -gt parameter')
+        ' Prints precision, recall, F1-measure. Requires -gt parameter')
 
     argparser.add_argument('-alias',
-        help='file with aliases.',
-        default = default_alias_file)
+                           help='file with aliases.',
+                           default=default_alias_file)
 
     argparser.add_argument('-gen',
-        help='file with generic tokens.',
-        default = default_gen_file)
+                           help='file with generic tokens.',
+                           default=default_gen_file)
 
-    argparser.add_argument('-av',
-        help='file with list of AVs to use')
+    argparser.add_argument('-av', help='file with list of AVs to use')
 
-    argparser.add_argument('-pup',
+    argparser.add_argument(
+        '-pup',
         action='store_true',
         help='if used each sample is classified as PUP or not')
 
-    argparser.add_argument('-gendetect',
+    argparser.add_argument(
+        '-gendetect',
         action='store_true',
         help='if used produce generics file at end. Requires -gt parameter')
 
     argparser.add_argument('-aliasdetect',
-        action='store_true',
-        help='if used produce aliases file at end')
+                           action='store_true',
+                           help='if used produce aliases file at end')
 
-    argparser.add_argument('-v', '--verbose',
-        action='store_true',
-        help='output .verbose file with distinct tokens')
+    argparser.add_argument('-v',
+                           '--verbose',
+                           action='store_true',
+                           help='output .verbose file with distinct tokens')
 
-    argparser.add_argument('-hash',
+    argparser.add_argument(
+        '-hash',
         help='hash used to name samples. Should match ground truth',
         choices=['md5', 'sha1', 'sha256'])
 
-    argparser.add_argument('-fam',
+    argparser.add_argument(
+        '-fam',
         action='store_true',
-        help='if used produce families file with PUP/malware counts per family')
+        help='if used produce families file with PUP/malware counts per family'
+    )
 
-    argparser.add_argument('-vt3', action='store_true',
-        help='input are VT v3 files')
+    argparser.add_argument('-vt3',
+                           action='store_true',
+                           help='input are VT v3 files')
 
     args = argparser.parse_args()
 
     if not args.vt and not args.lb and not args.vtdir and not args.lbdir:
         sys.stderr.write('One of the following 4 arguments is required: '
-                          '-vt,-lb,-vtdir,-lbdir\n')
+                         '-vt,-lb,-vtdir,-lbdir\n')
         exit(1)
 
     if (args.vt or args.vtdir) and (args.lb or args.lbdir):
         sys.stderr.write('Use either -vt/-vtdir or -lb/-lbdir. '
-                          'Both types of input files cannot be combined.\n')
+                         'Both types of input files cannot be combined.\n')
         exit(1)
 
     if args.gendetect and not args.gt:
@@ -439,21 +452,19 @@ if __name__=='__main__':
             sys.stderr.write('[-] Using no aliases\n')
             args.alias = None
         else:
-            sys.stderr.write('[-] Using aliases in %s\n' % (
-                              args.alias))
+            sys.stderr.write('[-] Using aliases in %s\n' % (args.alias))
     else:
-        sys.stderr.write('[-] Using generic aliases in %s\n' % (
-                          default_alias_file))
+        sys.stderr.write('[-] Using generic aliases in %s\n' %
+                         (default_alias_file))
 
     if args.gen:
         if args.gen == '/dev/null':
             sys.stderr.write('[-] Using no generic tokens\n')
             args.gen = None
         else:
-            sys.stderr.write('[-] Using generic tokens in %s\n' % (
-                              args.gen))
+            sys.stderr.write('[-] Using generic tokens in %s\n' % (args.gen))
     else:
-        sys.stderr.write('[-] Using default generic tokens in %s\n' % (
-                          default_gen_file))
-        
+        sys.stderr.write('[-] Using default generic tokens in %s\n' %
+                         (default_gen_file))
+
     main(args)
